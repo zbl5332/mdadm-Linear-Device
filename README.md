@@ -1,15 +1,20 @@
 # mdadm-Linear-Device
   Multiple Disk and Device Administration
 
-**Developed on Linux
-Please replace the jbod.o and jbod_server if using on ARM Architecture based devices** 
+**Developed on Linux**
+
+**Please replace the jbod.o and jbod_server if using on ARM Architecture based devices** 
 
 Provide disks as a JBOD (Just a Bunch of Disks), which is a storage architecture consisting of numerous disks inside of a single storage enclosure. 
 
 Bits  Width Field    Description
+
 28-31  4    DiskID   This is the ID of the disk to perform operation on
+
 20-27  8    BlockID  Block address within the disk
+
 14-19  6    Command  This is the command to be executed by JBOD.
+
 0-13  14    Reserved Unused bits (for now)
 
 Each of the disks consists of 256 blocks, and each block has 256 bytes, coming to a total of 256 × 256 = 65,536 bytes per disk. The combined capacity is 16 × 65,536 = 1,048,576 bytes = 1 MB. 
@@ -85,9 +90,13 @@ The protocol defined by the JBOD vendor has two messages. The JBOD request messa
 Both messages use the same format:
 
 Bytes Field       Description
+
 0-1   length      The size of the packet in bytes
-2-5   opcode      The opcode for the JBOD operation (format defined in Lab 2 README)
+
+2-5   opcode      The opcode for the JBOD operation
+
 6-7   return code Return code from the JBOD operation (i.e., returns 0 on success and -1 on failure)
+
 8-263 block       Where needed, a block of size JBOD BLOCK SIZE
 
 **In a nutshell, there are four steps for network:**
