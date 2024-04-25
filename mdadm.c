@@ -1,7 +1,8 @@
-/* Author:    
-   Date:
+/* Author: Ziyu Lin
+   Date: Apr.23, 2024
     */
-    
+
+
 #include <stdio.h>
 #include <string.h>
 #include <assert.h>
@@ -24,7 +25,7 @@ int mdadm_mount(void) {
         return -1;
     }
     // Mount the JBOD system
-    result = jbod_operation(JBOD_MOUNT << 14, NULL);  // Shift left to point to Command in 14-19 bits to perform operation. Block can be NULL provided by instruction
+    result = jbod_client_operation(JBOD_MOUNT << 14, NULL);  // Shift left to point to Command in 14-19 bits to perform operation. Block can be NULL provided by instruction
     // Check if the JBOD mount operation was successful
     // 0-success, -1-failed, as per JBOD system
     if (result == 0) {
@@ -42,7 +43,7 @@ int mdadm_unmount(void) {
         return -1;
     }
     // Unmount the JBOD system
-    result = jbod_operation(JBOD_UNMOUNT << 14, NULL);  // Shift left to point to Command. Block can be NULL
+    result = jbod_client_operation(JBOD_UNMOUNT << 14, NULL);  // Shift left to point to Command. Block can be NULL
     // Check if the JBOD unmount operation was successful
     // 0-success, -1-failed, as per JBOD system
     if (result == 0) {
@@ -103,11 +104,11 @@ int mdadm_read(uint32_t addr, uint32_t len, uint8_t *buf) {
         } else {
             // If the block is not in the cache, read the block from the disk
             // Seek to current disk
-            jbod_operation((JBOD_SEEK_TO_DISK << 14) | (disk_id << 28), NULL);
+            jbod_client_operation((JBOD_SEEK_TO_DISK << 14) | (disk_id << 28), NULL);
             // Seek to current block of the disk
-            jbod_operation((JBOD_SEEK_TO_BLOCK << 14) | (block_id << 20), NULL);
+            jbod_client_operation((JBOD_SEEK_TO_BLOCK << 14) | (block_id << 20), NULL);
             // Read the block from the disk
-            int read_block = jbod_operation(JBOD_READ_BLOCK << 14, temp_buf);
+            int read_block = jbod_client_operation(JBOD_READ_BLOCK << 14, temp_buf);
             // Check if read block operation failed
             if (read_block != 0) {
                 // Free temp_buf on failure
@@ -181,10 +182,10 @@ int mdadm_write(uint32_t addr, uint32_t len, const uint8_t *buf) {
         // Check if the cache hit status is 1, which means the block is in the cache
         if (cache_hit != 1) {
             // Seek to the disk and block
-            jbod_operation((JBOD_SEEK_TO_DISK << 14) | (disk_id << 28), NULL);
-            jbod_operation((JBOD_SEEK_TO_BLOCK << 14) | (block_id << 20), NULL);
+            jbod_client_operation((JBOD_SEEK_TO_DISK << 14) | (disk_id << 28), NULL);
+            jbod_client_operation((JBOD_SEEK_TO_BLOCK << 14) | (block_id << 20), NULL);
             // If writing part of a block, read the current block, modify it, and write it back.
-            int read_block = jbod_operation(JBOD_READ_BLOCK << 14, temp_buf);
+            int read_block = jbod_client_operation(JBOD_READ_BLOCK << 14, temp_buf);
             // Check if read block operation failed
             if (read_block != 0) {
                 // Free temp_buf on failure
@@ -197,9 +198,9 @@ int mdadm_write(uint32_t addr, uint32_t len, const uint8_t *buf) {
         memcpy(temp_buf + block_offset, buf + bytes_written, write_now);
 
         // Seek again to the correct position and write the block
-        jbod_operation((JBOD_SEEK_TO_DISK << 14) | (disk_id << 28), NULL);
-        jbod_operation((JBOD_SEEK_TO_BLOCK << 14) | (block_id << 20), NULL);
-        int write_block = jbod_operation(JBOD_WRITE_BLOCK << 14, temp_buf);
+        jbod_client_operation((JBOD_SEEK_TO_DISK << 14) | (disk_id << 28), NULL);
+        jbod_client_operation((JBOD_SEEK_TO_BLOCK << 14) | (block_id << 20), NULL);
+        int write_block = jbod_client_operation(JBOD_WRITE_BLOCK << 14, temp_buf);
         // Check if write block operation failed
         if (write_block != 0) {
             // Return -1 if the write operation failed
